@@ -172,16 +172,12 @@ Ce module gère le déploiement du service Cloud Run.
 - **`modules/cloudrun/variables.tf`** : Déclare les variables spécifiques au service Cloud Run, telles que le nom du service, la région, et les variables d'environnement.
 - **`modules/cloudrun/outputs.tf`** : Définit les outputs pour récupérer l'URL du service Cloud Run.
 
-### Documentation et Gestion de l'État
-
-La documentation est intégrée sous forme de commentaires dans les fichiers Terraform pour expliquer chaque section et chaque variable. Cette approche permet une meilleure compréhension pour les autres développeurs ou administrateurs qui pourraient avoir à travailler sur cette infrastructure.
-
 ### Meilleures Pratiques Suivies
 
 1. **Modularité** : En utilisant des modules, la configuration est organisée, réutilisable et maintenable. Chaque module encapsule une partie spécifique de l'infrastructure.
 2. **Gestion des Variables** : Les variables sont centralisées pour permettre une configuration spécifique à chaque environnement (par exemple, dev, staging, prod).
 3. **Gestion de l'État** : L'utilisation d'un backend distant pour gérer l'état Terraform assure que l'état est partagé entre les membres de l'équipe et sécurisé.
 4. **Outputs** : Les outputs fournissent des informations utiles qui peuvent être utilisées ailleurs ou pour d'autres opérations post-déploiement.
-5. **Documentation** : Les commentaires et les explications dans le code facilitent la compréhension et la maintenance de l'infrastructure.
+5. **Documentation** : Les descriptions dans le code facilitent la compréhension et la maintenance de l'infrastructure.
 
-En suivant ces pratiques, la solution est robuste, évolutive et prête pour des environnements de production, tout en restant facile à gérer et à étendre.
+En suivant ces pratiques, la solution  que nous avons mise en place est robuste, évolutive et prête pour des environnements de production, tout en restant facile à gérer et à étendre.
