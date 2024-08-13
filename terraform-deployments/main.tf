@@ -33,6 +33,12 @@ module "cloudrun" {
   }
 }
 
+module "load_balancer" {
+  source                = "./modules/load_balancer"
+  lb_name               = var.lb_name
+  backend_service_group = module.cloud_run.service_url
+}
+
 output "sql_instance_connection_name" {
   value = module.cloudsql.connection_name
 }

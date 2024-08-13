@@ -50,3 +50,8 @@ variable "sql_database_version" {
   type        = string
   
 }
+
+variable "lb_name" {
+  description = "Nom de l'équilibrage de charge"
+  type        = string
+}

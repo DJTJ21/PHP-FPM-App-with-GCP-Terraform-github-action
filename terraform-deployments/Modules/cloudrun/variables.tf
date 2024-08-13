@@ -17,3 +17,7 @@ variable "env_vars" {
   description = "Variables d'environnement pour le conteneur"
   type        = map(string)
 }
+
+output "load_balancer_ip" {
+  value = module.load_balancer.load_balancer_ip
+}
