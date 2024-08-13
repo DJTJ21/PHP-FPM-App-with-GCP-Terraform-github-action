@@ -1,7 +1,0 @@
-FROM php:7.4-fpm
-RUN apt-get update && apt-get install -y nginx
-
-COPY . /var/www/html
-COPY default.conf /etc/nginx/conf.d/default.conf
-
-CMD service nginx start && php-fpm

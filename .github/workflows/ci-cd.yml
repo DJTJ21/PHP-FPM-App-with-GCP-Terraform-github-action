@@ -1,0 +1,45 @@
+name: CI/CD Pipeline
+
+# Déclencheurs pour le workflow
+on:
+  push:
+    branches:
+      - main  # Déclenche le workflow lorsqu'un push est fait sur la branche 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1: Vérification du code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Étape 2: Configuration de Google Cloud SDK
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.10.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      # Étape 3: Authentification auprès de Google Container Registry (GCR)
+      - name: Authenticate to Google Container Registry
+        run: gcloud auth configure-docker --quiet
+
+      # Étape 4: Construction de l'image Docker
+      - name: Build Docker image
+        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/php-fpm-app:$GITHUB_SHA .
+
+      # Étape 5: Publication de l'image Docker sur Google Container Registry (GCR)
+      - name: Push Docker image to Google Container Registry
+        run: docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/php-fpm-app:$GITHUB_SHA
+
+      # Étape 6: Déploiement de l'application sur Cloud Run avec Terraform
+      - name: Deploy to Cloud Run
+        run: |
+          cd terraform-deployments
+          terraform init
+          terraform apply -auto-approve -var "image=gcr.io/${{ secrets.GCP_PROJECT_ID }}/php-fpm-app:$GITHUB_SHA"
+
+# Les secrets GitHub sont utilisés pour stocker les informations sensibles
+# comme les identifiants de connexion, les clés API, etc.
