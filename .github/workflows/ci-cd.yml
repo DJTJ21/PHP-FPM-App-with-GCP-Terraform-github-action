@@ -28,7 +28,7 @@ jobs:
 
       # Étape 4: Construction de l'image Docker
       - name: Build Docker image
-        run: docker build -t us-central1-docker.pkg.dev/devops-tests-432415devops/php-fpm-app:$GITHUB_SHA app/
+        run: docker build -t us-central1-docker.pkg.dev/devops-tests-432415/devops/php-fpm-app:$GITHUB_SHA app/
 
       # Étape 5: Publication de l'image Docker sur Google Container Registry (GCR)
       - name: Push Docker image to Google Container Registry
