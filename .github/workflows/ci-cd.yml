@@ -24,7 +24,7 @@ jobs:
 
       # Étape 3: Authentification auprès de Google Container Registry (GCR)
       - name: Authenticate to Google Container Registry
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+        run: gcloud auth login && gcloud auth configure-docker us-central1-docker.pkg.dev
 
       # Étape 4: Construction de l'image Docker
       - name: Build Docker image
