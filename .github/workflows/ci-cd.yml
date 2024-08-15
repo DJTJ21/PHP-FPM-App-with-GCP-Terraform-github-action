@@ -24,15 +24,15 @@ jobs:
 
       # Étape 3: Authentification auprès de Google Container Registry (GCR)
       - name: Authenticate to Google Container Registry
-        run: gcloud auth login --no-launch-browser login && gcloud auth configure-docker us-central1-docker.pkg.dev
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       # Étape 4: Construction de l'image Docker
       - name: Build Docker image
-        run: docker build -t us-central1-docker.pkg.dev/devops-tests/devops/php-fpm-app:$GITHUB_SHA app/
+        run: docker build -t us-central1-docker.pkg.dev/devops-tests-432415devops/php-fpm-app:$GITHUB_SHA app/
 
       # Étape 5: Publication de l'image Docker sur Google Container Registry (GCR)
       - name: Push Docker image to Google Container Registry
-        run: docker push us-central1-docker.pkg.dev/devops-tests/devops/php-fpm-app:$GITHUB_SHA
+        run: docker push us-central1-docker.pkg.dev/devops-tests-432415/devops/php-fpm-app:$GITHUB_SHA
 
       # Étape 6: Déploiement de l'application sur Cloud Run avec Terraform
       - name: Deploy to Cloud Run
