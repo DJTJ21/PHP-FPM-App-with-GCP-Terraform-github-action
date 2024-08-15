@@ -17,7 +17,7 @@ jobs:
 
       # Étape 2: Configuration de Google Cloud SDK
       - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@main
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
@@ -28,7 +28,7 @@ jobs:
 
       # Étape 4: Construction de l'image Docker
       - name: Build Docker image
-        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/php-fpm-app:$GITHUB_SHA .
+        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/php-fpm-app:$GITHUB_SHA app/
 
       # Étape 5: Publication de l'image Docker sur Google Container Registry (GCR)
       - name: Push Docker image to Google Container Registry
