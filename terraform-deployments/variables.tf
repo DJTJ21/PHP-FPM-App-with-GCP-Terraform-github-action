@@ -55,3 +55,8 @@ variable "lb_name" {
   description = "Nom de l'équilibrage de charge"
   type        = string
 }
+
+variable "cloud_run_service_name" {
+  description = "Nom du service Cloud Run à utiliser dans le NEG"
+  type        = string
+}

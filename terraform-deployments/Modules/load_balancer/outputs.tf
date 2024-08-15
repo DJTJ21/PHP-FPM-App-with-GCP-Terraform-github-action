@@ -1,4 +1,3 @@
 output "load_balancer_ip" {
-  description = "Adresse IP du Load Balancer"
-  value       = google_compute_global_address.default.address
+  value = google_compute_global_forwarding_rule.default.ip_address
 }

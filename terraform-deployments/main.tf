@@ -4,7 +4,7 @@ provider "google" {
 }
 
 module "cloudsql" {
-  source            = "./modules/cloudsql"
+  source            = "./Modules/cloudsql"
   instance_name     = var.sql_instance_name
   database_name     = var.sql_database_name
   database_user     = var.sql_database_user
@@ -15,13 +15,13 @@ module "cloudsql" {
 }
 
 module "storage" {
-  source = "./modules/storage"
+  source = "./Modules/storage"
   bucket_name = var.bucket_name
   location    = var.region
 }
 
 module "cloudrun" {
-  source = "./modules/cloudrun"
+  source = "./Modules/cloudrun"
   image   = var.image
   region  = var.region
   service_name = var.cloudrun_service_name
@@ -34,9 +34,11 @@ module "cloudrun" {
 }
 
 module "load_balancer" {
-  source                = "./modules/load_balancer"
+  source                = "./Modules/load_balancer"
   lb_name               = var.lb_name
-  backend_service_group = module.cloud_run.service_url
+  region                = var.region
+  backend_service_group = module.cloudrun.service_url
+  cloud_run_service_name = module.cloudrun.service_name
 }
 
 output "sql_instance_connection_name" {

@@ -27,6 +27,8 @@ resource "google_cloud_run_service" "default" {
           value = var.env_vars["DB_PASSWORD"]
         }
       }
+      
+      
     }
   }
 
@@ -36,3 +38,11 @@ resource "google_cloud_run_service" "default" {
   }
 }
 
+
+# Autoriser l'accès non authentifié
+resource "google_cloud_run_service_iam_member" "noauth" {
+  service = google_cloud_run_service.default.name
+  location = google_cloud_run_service.default.location
+  role    = "roles/run.invoker"
+  member  = "allUsers"
+}

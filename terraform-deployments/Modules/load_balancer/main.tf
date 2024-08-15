@@ -8,8 +8,8 @@ resource "google_compute_url_map" "default" {
 }
 
 resource "google_compute_target_http_proxy" "default" {
-  name      = var.lb_name
-  url_map   = google_compute_url_map.default.self_link
+  name    = var.lb_name
+  url_map = google_compute_url_map.default.self_link
 }
 
 resource "google_compute_global_forwarding_rule" "default" {
@@ -21,12 +21,27 @@ resource "google_compute_global_forwarding_rule" "default" {
 }
 
 resource "google_compute_backend_service" "default" {
-  name          = var.lb_name
+  name = var.lb_name
+
   backend {
-    group = var.backend_service_group
+    group = google_compute_region_network_endpoint_group.cloud_run_neg.id
   }
-  health_checks = [google_compute_health_check.default.self_link]
+
 }
+
+# Création du Network Endpoint Group (NEG) pour le service Cloud Run
+resource "google_compute_region_network_endpoint_group" "cloud_run_neg" {
+  name                  = "${var.lb_name}-neg"
+  network_endpoint_type = "SERVERLESS"
+  region                = var.region
+
+  cloud_run {
+    service = var.cloud_run_service_name
+  }
+}
+
+
+# A utiliser si jamais j'en est besoin
 
 resource "google_compute_health_check" "default" {
   name               = "${var.lb_name}-hc"
@@ -34,6 +49,7 @@ resource "google_compute_health_check" "default" {
   timeout_sec        = 5
   healthy_threshold  = 2
   unhealthy_threshold = 2
+
   http_health_check {
     request_path = "/"
     port         = 80
