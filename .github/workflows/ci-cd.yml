@@ -35,7 +35,7 @@ jobs:
         run: docker push us-central1-docker.pkg.dev/devops-tests-432415/devops/php-fpm-app:$GITHUB_SHA
 
       # Étape 6: Déploiement de l'application sur Cloud Run avec Terraform
-      - name: Deploy to Cloud Run
+      - name: Deploy app to Cloud Run
         run: |
           cd terraform-deployments
           terraform init
