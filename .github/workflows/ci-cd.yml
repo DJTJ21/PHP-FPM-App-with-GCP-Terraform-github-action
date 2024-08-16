@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_DEV }}
   GAR_LOCATION: us-central1 # TODO: update region of the Artifact Registry
-  REPOSITORY: devops-test # TODO: update to Artifact Registry docker repository
+  REPOSITORY: devops-dev # TODO: update to Artifact Registry docker repository
   IMAGE: php-fpm-app
 
 jobs:
@@ -52,6 +52,6 @@ jobs:
     # Étape 6: Déploiement de l'application sur Cloud Run avec Terraform
     - name: Deploy app to Cloud Run
       run: |
-        cd terraform-deployments
+        cd terraform-deployments/environments/dev
         terraform init
         terraform apply -auto-approve -var "image=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA"
