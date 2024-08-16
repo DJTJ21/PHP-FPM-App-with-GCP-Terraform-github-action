@@ -1,7 +1,10 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  script: |
-    docker build -t "$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA" .
-  automapSubstitutions: true
+  args: ['build', '-t', '$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$COMMIT_SHA', '.']
+  dir: 'app'
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$COMMIT_SHA']
+
 images:
-- '$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA'
+- '$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$COMMIT_SHA'

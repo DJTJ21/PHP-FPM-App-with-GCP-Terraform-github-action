@@ -43,7 +43,7 @@ jobs:
      # Build the Docker image and publish using Cloud Build
     - name: Trigger Cloud Build
       run: |
-        gcloud builds submit --config cloudBuild/cloudbuild.yaml --substitutions _PROJECT_ID=${{ secrets.GCP_PROJECT_ID_DEV }},_REPOSITORY=$REPOSITORY,_IMAGE=$IMAGE,_COMMIT_SHA=$GITHUB_SHA
+        gcloud builds submit --config cloudBuild/cloudbuild.yaml --substitutions _PROJECT_ID=${{ secrets.GCP_PROJECT_ID_DEV }},_REPOSITORY=$REPOSITORY,_IMAGE=$IMAGE,_COMMIT_SHA=$GITHUB_SHA,_GAR_LOCATION=$GAR_LOCATION
         
 
     #  Déploiement de l'application sur Cloud Run avec Terraform
