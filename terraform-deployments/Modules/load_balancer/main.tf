@@ -40,18 +40,3 @@ resource "google_compute_region_network_endpoint_group" "cloud_run_neg" {
   }
 }
 
-
-# A utiliser si jamais j'en est besoin
-
-resource "google_compute_health_check" "default" {
-  name               = "${var.lb_name}-hc"
-  check_interval_sec = 10
-  timeout_sec        = 5
-  healthy_threshold  = 2
-  unhealthy_threshold = 2
-
-  http_health_check {
-    request_path = "/"
-    port         = 80
-  }
-}
