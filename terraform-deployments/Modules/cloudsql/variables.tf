@@ -28,3 +28,7 @@ variable "database_version" {
   description = "Version de MYSQL"
   type        = string
 }
+
+resource "random_id" "bucket_id" {
+  byte_length = 4
+}
