@@ -52,6 +52,6 @@ jobs:
     # Étape 6: Déploiement de l'application sur Cloud Run avec Terraform
     - name: Deploy app to Cloud Run
       run: |
-        cd terraform-deployments
+        cd terraform-deployments/environments/prod
         terraform init
         terraform apply -auto-approve -var "image=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA"
