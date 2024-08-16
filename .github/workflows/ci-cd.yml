@@ -55,8 +55,6 @@ jobs:
       run: |-
         docker build \
           --tag "$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA" \
-          --build-arg GITHUB_SHA="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_REF" \
           app/
     # Push the Docker image to Google Artifact Registry
     - name: Publish
@@ -68,4 +66,4 @@ jobs:
       run: |
         cd terraform-deployments
         terraform init
-        terraform apply -auto-approve
+        terraform apply -auto-approve -var "image=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA"
