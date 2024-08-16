@@ -44,7 +44,7 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: google-github-actions/setup-gcloud@v2
       with:
-          project_id: '${{ secrets.GCP_PROJECT_ID }}'
+          project_id: '$PROJECT_ID'
     
     - name: 'Authenticate Docker with Artifact Registry'
       run: |
@@ -63,11 +63,9 @@ jobs:
       run: |-
         docker push "$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA"
     
-    # Deploy the Docker image to the GKE cluster
-    - name: Deploy
-      run: |-
-        # replacing the image name in the k8s template
-        ./kustomize edit set image LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
-        ./kustomize build . | kubectl apply -f -
-        kubectl rollout status deployment/$DEPLOYMENT_NAME
-        kubectl get services -o wide
+    # Étape 6: Déploiement de l'application sur Cloud Run avec Terraform
+    - name: Deploy app to Cloud Run
+      run: |
+        cd terraform-deployments
+        terraform init
+        terraform apply -auto-approve -var "image=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA"
