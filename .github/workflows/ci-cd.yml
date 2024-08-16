@@ -66,4 +66,4 @@ jobs:
       run: |
         cd terraform-deployments
         terraform init
-        terraform apply -auto-approve -var "image=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA"
+        terraform apply -auto-approve 
