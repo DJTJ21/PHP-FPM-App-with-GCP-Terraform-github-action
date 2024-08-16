@@ -1,78 +1,61 @@
-# First, We need an Operating System for our docker. We choose alpine.
-FROM alpine:3.16.2
+ARG ALPINE_VERSION=3.20
+FROM alpine:${ALPINE_VERSION}
+LABEL Maintainer="DJETEJE MOTSEBO ROMUALD"
+LABEL Description="Lightweight container with Nginx 1.26 & PHP 8.3 based on Alpine Linux."
+# Setup document root
+WORKDIR /var/www/html
 
-# Next, Update Alpine OS
-RUN apk update && apk upgrade
-
-# Next, we need to install utilities inside alpine, we can achieve this by type RUN then, the alpine command.
-# Install apline utilities and php depedencies
+# Install packages and remove default server definition
 RUN apk add --no-cache \
-    bash \
-    php8 \ 
-    php8-fpm \ 
-    php8-opcache \
-    php8-gd \
-    php8-zlib \
-    php8-curl \
-    php8-bcmath \
-    php8-ctype \
-    php8-iconv \
-    php8-intl \
-    php8-json \
-    php8-mbstring \
-    php8-mysqlnd \
-    php8-openssl \
-    php8-pdo \
-    php8-pdo_mysql \
-    php8-pdo_pgsql \
-    php8-pdo_sqlite \
-    php8-phar \
-    php8-posix \
-    php8-session \
-    php8-soap \
-    php8-xml \
-    php8-zip \
-    libmcrypt-dev \
-    libltdl 
+  curl \
+  nginx \
+  php83 \
+  php83-ctype \
+  php83-curl \
+  php83-dom \
+  php83-fileinfo \
+  php83-fpm \
+  php83-gd \
+  php83-intl \
+  php83-mbstring \
+  php83-mysqli \
+  php83-opcache \
+  php83-openssl \
+  php83-phar \
+  php83-session \
+  php83-tokenizer \
+  php83-xml \
+  php83-xmlreader \
+  php83-xmlwriter \
+  supervisor
 
-# Next, Install nginx on alpine official guide in nginx official site. I just copied and paste what's on the site guide for installing nginx on alpine.
-# https://docs.nginx.com/nginx/admin-guide/installing-nginx/installing-nginx-open-source/
-RUN apk add openssl curl ca-certificates
+# Configure nginx - http
+COPY config/nginx.conf /etc/nginx/nginx.conf
+# Configure nginx - default server
+COPY config/conf.d /etc/nginx/conf.d/
 
-# To set up the apk repository for stable nginx packages, run the command:
-RUN printf "%s%s%s\n" \
-"http://nginx.org/packages/alpine/v" \
-`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release` \
-"/main" \
-| tee -a /etc/apk/repositories
+# Configure PHP-FPM
+ENV PHP_INI_DIR /etc/php83
+COPY config/fpm-pool.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
+COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
-# Import an official nginx signing key so apk could verify the packages authenticity. Fetch the key:
-RUN curl -o /tmp/nginx_signing.rsa.pub https://nginx.org/keys/nginx_signing.rsa.pub
+# Configure supervisord
+COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Verify that the downloaded file contains the proper key:
-RUN openssl rsa -pubin -in /tmp/nginx_signing.rsa.pub -text -noout
+# Make sure files/folders needed by the processes are accessable when they run under the nobody user
+RUN chown -R nobody.nobody /var/www/html /run /var/lib/nginx /var/log/nginx
 
-# Move the key to apk trusted keys storage
-RUN mv /tmp/nginx_signing.rsa.pub /etc/apk/keys/
+# Switch to use a non-root user from here on
+USER nobody
 
-# Now, install nginx
-RUN apk add nginx
+# Add application
+COPY --chown=nobody src/ /var/www/html/
 
-# Install PHP Composer, If you use composer, you can uncomment this one.
-# RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Expose the port nginx is reachable on
+EXPOSE 8080
 
-# copy project file to nginx inside docker.
-COPY ./src /usr/share/nginx/html/project
+# Let supervisord start nginx & php-fpm
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
-# Copy default config and paste it into nginx config path inside docker.
-COPY ./nginx-configs/default.conf /etc/nginx/conf.d/default.conf
-
-# Expose port to be visible outside the container.
-EXPOSE 80
-EXPOSE 443
-
-STOPSIGNAL SIGTERM
-
-# Execute startup command.
-# Start php-fpm8 and nginx through bash terminal.
-CMD ["/bin/bash", "-c", "php-fpm8 && chmod 755 /usr/share/nginx/html/* && nginx -g 'daemon off;'"]
+# Configure a healthcheck to validate that everything is up&running
+HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1:8080/fpm-ping || exit 1
