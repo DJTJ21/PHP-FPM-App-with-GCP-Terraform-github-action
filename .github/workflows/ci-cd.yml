@@ -44,7 +44,7 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: google-github-actions/setup-gcloud@v2
       with:
-          project_id: '$PROJECT_ID'
+          project_id: '${{ secrets.GCP_PROJECT_ID }}'
     
     - name: 'Authenticate Docker with Artifact Registry'
       run: |
