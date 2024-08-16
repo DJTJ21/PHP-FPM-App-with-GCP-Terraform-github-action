@@ -1,1 +1,0 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"cloudrun","Source":"./Modules/cloudrun","Dir":"Modules/cloudrun"},{"Key":"cloudsql","Source":"./Modules/cloudsql","Dir":"Modules/cloudsql"},{"Key":"load_balancer","Source":"./Modules/load_balancer","Dir":"Modules/load_balancer"},{"Key":"storage","Source":"./Modules/storage","Dir":"Modules/storage"}]}
