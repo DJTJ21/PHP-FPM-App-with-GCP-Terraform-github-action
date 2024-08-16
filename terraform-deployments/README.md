@@ -1,183 +1,224 @@
 
-### Objectif de la Solution
 
-L'objectif est de créer une infrastructure complète sur GCP en utilisant Terraform. Les ressources à déployer incluent :
-1. **Un Projet Google Cloud** (facultatif si déjà existant).
-2. **Une instance Cloud SQL (MySQL)**.
-3. **Un Bucket Cloud Storage** pour stocker des fichiers statiques.
-4. **Un Service Cloud Run** qui déploie une application PHP-FPM via un conteneur Docker.
-5. **Une configuration Nginx** pour servir des fichiers statiques et rediriger les requêtes vers le conteneur PHP-FPM.
-6. **Un Équilibrage de Charge HTTP(S)** pour diriger le trafic vers le service Cloud Run.
+# Documentation de Déploiement Terraform pour Multi-Environnement
 
-### Structure du Projet
+## Table des Matières
+1. [Introduction](#introduction)
+2. [Structure du Projet Terraform](#structure-du-projet-terraform)
+3. [Configuration des Environnements](#configuration-des-environnements)
+   - [Fichier `main.tf`](#fichier-main.tf)
+   - [Fichier `variables.tf`](#fichier-variables.tf)
+   - [Fichier `terraform.tfvars`](#fichier-terraform.tfvars)
+   - [Fichier `backend.tf`](#fichier-backend.tf)
+4. [Modules Terraform](#modules-terraform)
+5. [Processus de Déploiement](#processus-de-deploiement)
+6. [Gestion de l'État Terraform](#gestion-de-l-etat-terraform)
+7. [Meilleures Pratiques](#meilleures-pratiques)
+8. [Dépannage](#dépannage)
 
-Le projet est organisé en plusieurs répertoires et fichiers pour faciliter la réutilisation, la lisibilité et la maintenance.
+---
 
-#### Arborescence des Répertoires et Fichiers
-```plaintext
-.
-├── main.tf
-├── variables.tf
-├── outputs.tf
-├── terraform.tfvars
-├── backend.tf
+## 1. Introduction
+
+Ce projet Terraform est structuré pour gérer les déploiements dans différents environnements (`dev`, `prod`, etc.). Chaque environnement a sa propre configuration, tout en réutilisant des modules communs pour les composants de l'infrastructure. Cela permet une gestion simplifiée et modulable des environnements, tout en garantissant que chaque déploiement est adapté aux besoins spécifiques de l'environnement.
+
+## 2. Structure du Projet Terraform
+
+La structure du répertoire Terraform est organisée comme suit :
+
+```
+terraform-deployments/
+│
 ├── modules/
-│   ├── cloudsql/
+│   ├── cloud_sql/
+│   ├── cloud_storage/
+│   ├── cloud_run/
+│   └── load_balancer/
+│   
+│
+├── environments/
+│   ├── dev/
 │   │   ├── main.tf
 │   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   ├── cloudrun/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   ├── storage/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-└── README.md
+│   │   ├── backend.tf
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── backend.tf
+│       └── terraform.tfvars
+
+
 ```
 
-- **`main.tf`** : Ce fichier est le fichier principal de Terraform qui orchestre la création des différentes ressources en appelant les modules.
-- **`variables.tf`** : Ce fichier déclare toutes les variables globales utilisées dans le projet.
-- **`outputs.tf`** : Ce fichier contient les outputs, c'est-à-dire les informations utiles extraites après la création des ressources (comme les URL, les noms, etc.).
-- **`terraform.tfvars`** : Ce fichier contient les valeurs des variables spécifiques à l'environnement (par exemple, les identifiants de projet, les noms d'instance).
-- **`backend.tf`** : Ce fichier configure la gestion de l'état de Terraform pour stocker les informations dans un backend distant sécurisé.
-- **`modules/`** : Ce répertoire contient les différents modules réutilisables pour créer des composants spécifiques de l'infrastructure.
+### 3. Configuration des Environnements
 
-### 1. Fichier Principal `main.tf`
+Chaque environnement (`dev`, `prod`) dispose de ses propres fichiers de configuration pour définir les paramètres spécifiques à cet environnement.
 
-Ce fichier est le point d'entrée de la configuration Terraform. Il orchestre la création des ressources en utilisant des modules.
+#### Fichier `main.tf`
+
+Le fichier `main.tf` dans chaque environnement contient les appels aux modules Terraform pour créer l'infrastructure.
 
 ```hcl
+# environments/dev/main.tf
+
 provider "google" {
   project = var.project_id
   region  = var.region
 }
-```
-- **Provider** : Le provider Google Cloud est configuré ici, en utilisant les variables `project_id` et `region` pour spécifier le projet et la région GCP.
 
-```hcl
-module "cloudsql" {
-  source            = "./modules/cloudsql"
-  instance_name     = var.sql_instance_name
-  database_name     = var.sql_database_name
-  database_user     = var.sql_database_user
-  database_password = var.sql_database_password
-  region            = var.region
-}
-```
-- **Module Cloud SQL** : Ce module gère la création de l'instance MySQL sur Cloud SQL. Les paramètres comme `instance_name`, `database_name`, etc., sont passés en tant que variables, ce qui permet de personnaliser la configuration pour différents environnements.
-
-```hcl
-module "storage" {
-  source = "./modules/storage"
-  bucket_name = var.bucket_name
-  location    = var.region
-}
-```
-- **Module Storage** : Ce module gère la création d'un bucket Cloud Storage pour stocker des fichiers statiques.
-
-```hcl
-module "cloudrun" {
-  source = "./modules/cloudrun"
-  image   = var.image
+module "vpc" {
+  source  = "../../modules/vpc"
+  name    = "dev-vpc"
   region  = var.region
-  service_name = var.cloudrun_service_name
-  env_vars = {
-    DB_HOST     = module.cloudsql.db_host,
-    DB_NAME     = module.cloudsql.db_name,
-    DB_USER     = module.cloudsql.db_user,
-    DB_PASSWORD = module.cloudsql.db_password,
-  }
+}
+
+module "cloud_sql" {
+  source         = "../../modules/cloud_sql"
+  instance_name  = "dev-sql-instance"
+  region         = var.region
+  tier           = "db-f1-micro"
+}
+
+module "cloud_storage" {
+  source         = "../../modules/cloud_storage"
+  bucket_name    = "dev-bucket"
+}
+
+module "cloud_run" {
+  source         = "../../modules/cloud_run"
+  service_name   = "dev-cloud-run"
+  image          = var.image
+}
+
+module "load_balancer" {
+  source         = "../../modules/load_balancer"
+  backend_service_name = "dev-backend-service"
 }
 ```
-- **Module Cloud Run** : Ce module déploie un service Cloud Run avec une image Docker spécifiée. Il configure également les variables d'environnement (`env_vars`) pour se connecter à la base de données MySQL.
 
-### 2. Fichier `variables.tf`
+#### Fichier `variables.tf`
 
-Ce fichier centralise la déclaration de toutes les variables utilisées dans la configuration Terraform.
+Le fichier `variables.tf` définit les variables spécifiques à chaque environnement, telles que l'ID du projet, la région, et l'image Docker.
 
 ```hcl
+# environments/dev/variables.tf
+
 variable "project_id" {
-  description = "ID du projet Google Cloud"
-  type        = string
+  description = "The project ID to deploy resources into"
+}
+
+variable "region" {
+  description = "The region to deploy resources into"
+  default     = "us-central1"
+}
+
+variable "image" {
+  description = "The Docker image to deploy"
 }
 ```
-- **Variables** : Les variables permettent de rendre la configuration flexible et réutilisable. Par exemple, le `project_id` peut varier selon les environnements (développement, production, etc.).
 
-### 3. Fichier `outputs.tf`
+#### Fichier `terraform.tfvars`
 
-Ce fichier définit les outputs, c’est-à-dire les valeurs importantes générées par Terraform après l'application de la configuration.
+Le fichier `terraform.tfvars` contient les valeurs spécifiques pour les variables de l'environnement.
 
 ```hcl
-output "sql_instance_connection_name" {
-  value = module.cloudsql.connection_name
-}
+# environments/dev/terraform.tfvars
+
+project_id = "your-dev-project-id"
+image      = "gcr.io/your-dev-project-id/your-image:latest"
 ```
-- **Outputs** : Les outputs comme `sql_instance_connection_name` sont utiles pour récupérer des informations sur les ressources créées, que vous pourriez utiliser dans d'autres scripts ou configurations.
 
-### 4. Fichier `backend.tf`
+#### Fichier `backend.tf`
 
-Ce fichier configure la gestion de l'état Terraform. L'état stocke des informations sur les ressources gérées par Terraform.
+Le fichier `backend.tf` configure le backend de stockage de l'état Terraform pour chaque environnement, permettant de suivre les modifications d'infrastructure de manière sécurisée.
 
 ```hcl
+# environments/dev/backend.tf
+
 terraform {
   backend "gcs" {
-    bucket = "terraform-state-bucket"
-    prefix = "terraform/state"
+    bucket = "your-dev-terraform-state-bucket"
+    prefix = "terraform/state/dev"
   }
 }
 ```
-- **Backend GCS** : L'état Terraform est stocké dans un bucket Google Cloud Storage (`terraform-state-bucket`). Cela permet une gestion centralisée et sécurisée, essentielle dans des environnements partagés ou de production.
 
-### 5. Fichier `terraform.tfvars`
+### 4. Modules Terraform
 
-Ce fichier contient les valeurs spécifiques aux variables déclarées dans `variables.tf`. C'est ici que vous personnalisez la configuration pour un environnement donné.
+Les modules Terraform sont définis dans le répertoire `modules/`. Chaque module encapsule la logique pour gérer une ressource spécifique, comme un service Cloud Run, une instance Cloud SQL, ou un bucket de stockage.
+
+Exemple de module `cloud_sql` :
 
 ```hcl
-project_id            = "my-gcp-project"
-region                = "us-central1"
-sql_instance_name     = "my-sql-instance"
-sql_database_name     = "my-database"
-sql_database_user     = "admin"
-sql_database_password = "supersecurepassword"
-bucket_name           = "my-static-files-bucket"
-image                 = "gcr.io/my-gcp-project/php-fpm-image"
-cloudrun_service_name = "my-cloudrun-service"
+# modules/cloud_sql/main.tf
+
+resource "google_sql_database_instance" "default" {
+  name             = var.instance_name
+  database_version = "MYSQL_8_0"
+  region           = var.region
+
+  settings {
+    tier = var.tier
+  }
+}
 ```
 
-### 6. Modules
+### 5. Processus de Déploiement
 
-#### a) Module `cloudsql`
+Pour déployer l'infrastructure dans un environnement spécifique, suivez les étapes suivantes :
 
-Ce module gère la création de l'instance MySQL sur Cloud SQL.
+1. **Accédez au répertoire de l'environnement souhaité** (`dev` ou `prod`).
 
-- **`modules/cloudsql/main.tf`** : Contient la logique pour créer l'instance, la base de données, et l'utilisateur MySQL.
-- **`modules/cloudsql/variables.tf`** : Contient la déclaration des variables spécifiques à ce module.
-- **`modules/cloudsql/outputs.tf`** : Définit les outputs pour récupérer des informations utiles comme le `connection_name`.
+   ```bash
+   cd terraform-deployments/environments/dev  # ou prod
+   ```
 
-#### b) Module `storage`
+2. **Initialisez Terraform** dans cet environnement.
 
-Ce module gère la création du bucket Cloud Storage.
+   ```bash
+   terraform init
+   ```
 
-- **`modules/storage/main.tf`** : Crée un bucket Cloud Storage.
-- **`modules/storage/variables.tf`** : Déclare les variables spécifiques à ce module.
-- **`modules/storage/outputs.tf`** : Définit les outputs pour récupérer l'URL du bucket.
+3. **Appliquez la configuration Terraform**.
 
-#### c) Module `cloudrun`
+   ```bash
+   terraform apply -var-file="terraform.tfvars" -auto-approve
+   ```
 
-Ce module gère le déploiement du service Cloud Run.
+### 6. Gestion de l'État Terraform
 
-- **`modules/cloudrun/main.tf`** : Déploie un service Cloud Run en utilisant une image Docker spécifiée. Il configure également les variables d'environnement pour l'application.
-- **`modules/cloudrun/variables.tf`** : Déclare les variables spécifiques au service Cloud Run, telles que le nom du service, la région, et les variables d'environnement.
-- **`modules/cloudrun/outputs.tf`** : Définit les outputs pour récupérer l'URL du service Cloud Run.
+L'état Terraform est stocké de manière sécurisée dans Google Cloud Storage (GCS). Chaque environnement a son propre état, configuré via le fichier `backend.tf`. Cela permet de gérer l'infrastructure de manière indépendante pour chaque environnement.
 
-### Meilleures Pratiques Suivies
+```hcl
+# Exemple de configuration backend pour un environnement de production
 
-1. **Modularité** : En utilisant des modules, la configuration est organisée, réutilisable et maintenable. Chaque module encapsule une partie spécifique de l'infrastructure.
-2. **Gestion des Variables** : Les variables sont centralisées pour permettre une configuration spécifique à chaque environnement (par exemple, dev, staging, prod).
-3. **Gestion de l'État** : L'utilisation d'un backend distant pour gérer l'état Terraform assure que l'état est partagé entre les membres de l'équipe et sécurisé.
-4. **Outputs** : Les outputs fournissent des informations utiles qui peuvent être utilisées ailleurs ou pour d'autres opérations post-déploiement.
-5. **Documentation** : Les descriptions dans le code facilitent la compréhension et la maintenance de l'infrastructure.
+terraform {
+  backend "gcs" {
+    bucket = "your-prod-terraform-state-bucket"
+    prefix = "terraform/state/prod"
+  }
+}
+```
 
-En suivant ces pratiques, la solution  que nous avons mise en place est robuste, évolutive et prête pour des environnements de production, tout en restant facile à gérer et à étendre.
+### 7. Meilleures Pratiques
+
+- **Modules réutilisables** : nous avons utilise des modules pour encapsuler les composants de l'infrastructure afin de garantir la cohérence et la réutilisabilité.
+- **Gestion de l'état** : nous avons Stocker l'état Terraform dans des backends sécurisés comme GCS pour assurer une gestion centralisée et collaborative des états.
+- **Environnement par défaut** : nous avons definie des valeurs par défaut pour les variables courantes comme `region` pour simplifier la configuration.
+
+### 8. Dépannage
+
+#### Problèmes Communs et Solutions
+
+- **Erreur d'authentification** : Assurez-vous que les clés du compte de service sont correctement configurées et que l'ID du projet est correct.
+- **Échec lors de l'initialisation de Terraform** : Vérifiez que le bucket GCS est accessible et que les permissions sont correctement définies.
+- **Conflit de ressources** : Vérifiez que les noms de ressources (comme les buckets ou les services) sont uniques à chaque environnement.
+
+### Récupérer l'Adresse IP du Load Balancer
+
+Une fois le déploiement terminé, vous pouvez récupérer l'adresse IP publique du Load Balancer avec la commande suivante :
+
+```bash
+gcloud compute addresses describe my-load-balancer-ip --region=us-central1 --format="get(address)"
+```
