@@ -1,10 +1,10 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$COMMIT_SHA', '.']
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/devops-dev/$IMAGE:$COMMIT_SHA', '.']
   dir: 'app'
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$COMMIT_SHA']
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/devops-dev/$IMAGE:$COMMIT_SHA']
 
 images:
-- 'us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$COMMIT_SHA'
+- 'us-central1-docker.pkg.dev/$PROJECT_ID/devops-dev/$IMAGE:$COMMIT_SHA'
