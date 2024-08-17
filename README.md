@@ -3,6 +3,10 @@
 
 Ce dépôt contient les configurations Terraform pour déployer une application PHP-FPM sur Google Cloud Platform (GCP) en utilisant Cloud Run, Cloud SQL, Cloud Storage, Cloud Build et un équilibreur de charge HTTP(S). La configuration supporte les environnements de développement et de production.
 
+## Architecture :
+
+0![Project Architecture](assets/php-projet.jpg)
+
 ## Configuration du Projet et Fonctionnalités
 
 ### 1. Prérequis
